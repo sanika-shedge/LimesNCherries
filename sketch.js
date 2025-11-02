@@ -129,6 +129,38 @@ function touchEnded() {
   swipeStartX = null;
 }
 
+// Desktop mouse equivalents so the Start screen works with a click/drag
+function mousePressed() {
+  swipeStartX = mouseX;
+}
+
+function mouseReleased() {
+  if (swipeStartX === null) return;
+  let delta = mouseX - swipeStartX;
+
+  if (!started && abs(delta) > 50) {
+    started = true;
+    pickRandomPhrase();
+    swipeStartX = null;
+    return;
+  }
+
+  if (abs(delta) > 50 && !animating && started) {
+    animating = true;
+    targetCardX = delta > 0 ? width : -width;
+  }
+
+  swipeStartX = null;
+}
+
+// Allow a simple click/tap to start (useful for desktop and accessibility)
+function mouseClicked() {
+  if (!started) {
+    started = true;
+    pickRandomPhrase();
+  }
+}
+
 // Utility
 function pickRandomPhrase() {
   currentPhrase = random(phrases);
