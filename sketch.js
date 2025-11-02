@@ -44,9 +44,10 @@ let phrases = [
 ];
 
 let currentPhrase = "";
-let cardX, targetCardX;
+let cardX = 0, targetCardX = 0;
 let animating = false;
 let swipeStartX = null;
+let started = false; // NEW: start screen flag
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -54,18 +55,31 @@ function setup() {
   textStyle(BOLD);
   textAlign(LEFT, TOP);
   noStroke();
-  pickRandomPhrase();
-  cardX = 0;
-  targetCardX = 0;
+  document.addEventListener("touchmove", e => e.preventDefault(), { passive: false }); // iOS safe
 }
 
 function draw() {
   background("#2f2f2f"); // slate gray background
 
-  // Smooth card animation
+  if (!started) {
+    // ---- Start screen ----
+    fill(0);
+    let cardMargin = width / 25;
+    let cardWidth = width - cardMargin * 2;
+    let cardHeight = height - cardMargin * 2;
+    rect(cardMargin, cardMargin, cardWidth, cardHeight, 25);
+
+    fill("#c00000");
+    textAlign(CENTER, CENTER);
+    textSize(width / 8);
+    text("Swipe to Start", width / 2, height / 2);
+    textAlign(LEFT, TOP);
+    return;
+  }
+
+  // ---- Main card display ----
   cardX = lerp(cardX, targetCardX, 0.25);
 
-  // Draw card
   let cardMargin = width / 25;
   let cardWidth = width - cardMargin * 2;
   let cardHeight = height - cardMargin * 2;
@@ -73,17 +87,15 @@ function draw() {
   fill(0);
   rect(cardX + cardMargin, cardMargin, cardWidth, cardHeight, 25);
 
-  // Dynamic text size (slightly bigger)
+  // Dynamic text size
   let textSizeValue = width / 10;
   textSize(textSizeValue);
 
-  // Text styling
   fill("#c00000");
   let textMargin = cardMargin + width / 15;
   let textBoxWidth = cardWidth - width / 7;
   text(currentPhrase, cardX + textMargin, cardMargin + width / 10, textBoxWidth, cardHeight - width / 10);
 
-  // Animation complete
   if (abs(cardX - targetCardX) < 1 && animating) {
     animating = false;
     cardX = 0;
@@ -101,7 +113,15 @@ function touchEnded() {
   if (swipeStartX === null) return;
   let delta = mouseX - swipeStartX;
 
-  if (abs(delta) > 50 && !animating) { // swipe threshold
+  if (!started && abs(delta) > 50) {
+    // Start the experience
+    started = true;
+    pickRandomPhrase();
+    swipeStartX = null;
+    return;
+  }
+
+  if (abs(delta) > 50 && !animating && started) {
     animating = true;
     targetCardX = delta > 0 ? width : -width;
   }
@@ -109,12 +129,12 @@ function touchEnded() {
   swipeStartX = null;
 }
 
-// Utility: pick random phrase
+// Utility
 function pickRandomPhrase() {
   currentPhrase = random(phrases);
 }
 
-// Handle screen resize
+// Handle resize
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
