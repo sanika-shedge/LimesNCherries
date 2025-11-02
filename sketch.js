@@ -1,6 +1,3 @@
-// Basic "random phrase on click" sketch
-// Replace the example phrases with your own list
-
 let phrases = [
   "Kiss your partners neck but the can't touch you",
   "Use each other as a human plate, peanut butter, chocolate sauce, whatever takes your fancy! ",
@@ -47,39 +44,77 @@ let phrases = [
 ];
 
 let currentPhrase = "";
+let cardX, targetCardX;
+let animating = false;
+let swipeStartX = null;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+  textFont("Helvetica");
   textStyle(BOLD);
   textAlign(LEFT, TOP);
-  fill("#c00000");
-  pickRandomPhrase(); // pick first phrase
-  noLoop(); // we’ll redraw manually
-  displayPhrase();
+  noStroke();
+  pickRandomPhrase();
+  cardX = 0;
+  targetCardX = 0;
 }
 
 function draw() {
-  // left empty (we use displayPhrase() instead)
+  background("#2f2f2f"); // slate gray background
+
+  // Smooth card animation
+  cardX = lerp(cardX, targetCardX, 0.25);
+
+  // Draw card
+  let cardMargin = width / 25;
+  let cardWidth = width - cardMargin * 2;
+  let cardHeight = height - cardMargin * 2;
+
+  fill(0);
+  rect(cardX + cardMargin, cardMargin, cardWidth, cardHeight, 25);
+
+  // Dynamic text size (slightly bigger)
+  let textSizeValue = width / 10;
+  textSize(textSizeValue);
+
+  // Text styling
+  fill("#c00000");
+  let textMargin = cardMargin + width / 15;
+  let textBoxWidth = cardWidth - width / 7;
+  text(currentPhrase, cardX + textMargin, cardMargin + width / 10, textBoxWidth, cardHeight - width / 10);
+
+  // Animation complete
+  if (abs(cardX - targetCardX) < 1 && animating) {
+    animating = false;
+    cardX = 0;
+    targetCardX = 0;
+    pickRandomPhrase();
+  }
 }
 
-function displayPhrase() {
-  background(0);
-  textSize(windowWidth / 10); // scales text size to screen width
-  let margin = width * 0.05;
-  let boxWidth = width - margin * 2;
-  text(currentPhrase, margin, margin, boxWidth, height); // auto-wrap text
+// Swipe gesture
+function touchStarted() {
+  swipeStartX = mouseX;
 }
 
-function mousePressed() {
-  pickRandomPhrase();
-  displayPhrase();
+function touchEnded() {
+  if (swipeStartX === null) return;
+  let delta = mouseX - swipeStartX;
+
+  if (abs(delta) > 50 && !animating) { // swipe threshold
+    animating = true;
+    targetCardX = delta > 0 ? width : -width;
+  }
+
+  swipeStartX = null;
 }
 
+// Utility: pick random phrase
 function pickRandomPhrase() {
   currentPhrase = random(phrases);
 }
 
+// Handle screen resize
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  displayPhrase();
 }
